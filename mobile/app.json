@@ -1,0 +1,135 @@
+{
+  "expo": {
+    "name": "Loopmates",
+    "slug": "loopmates",
+    "scheme": "loopmates",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "backgroundColor": "#FAFBFD",
+    "android": {
+      "package": "com.loopmates.app",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "backgroundColor": "#2F6BFF",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "softwareKeyboardLayoutMode": "resize",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ],
+          "data": [
+            {
+              "scheme": "loopmates"
+            },
+            {
+              "scheme": "https",
+              "host": "dashboard-loopmates.vercel.app",
+              "pathPrefix": "/call"
+            }
+          ]
+        }
+      ],
+      "permissions": [
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.RECEIVE_BOOT_COMPLETED"
+      ]
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      [
+        "react-native-audio-api",
+        {
+          "androidPermissions": [
+            "android.permission.RECORD_AUDIO",
+            "android.permission.MODIFY_AUDIO_SETTINGS",
+            "android.permission.FOREGROUND_SERVICE",
+            "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK",
+            "android.permission.FOREGROUND_SERVICE_MICROPHONE"
+          ],
+          "androidForegroundService": true,
+          "disableFFmpeg": true,
+          "iosBackgroundMode": true,
+          "androidFSTypes": [
+            "mediaPlayback",
+            "microphone"
+          ]
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "minSdkVersion": 26,
+            "compileSdkVersion": 37,
+            "targetSdkVersion": 35,
+            "enableProguardInReleaseBuilds": false
+          }
+        }
+      ],
+      "@react-native-google-signin/google-signin",
+      [
+        "expo-notifications",
+        {
+          "color": "#2F6BFF"
+        }
+      ],
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Loopmates uses the microphone so you can dictate messages.",
+          "speechRecognitionPermission": "Loopmates uses speech recognition to turn your voice into text.",
+          "androidSpeechServicePackages": [
+            "com.google.android.googlequicksearchbox"
+          ]
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Loopmates lets you attach photos to chats.",
+          "cameraPermission": "Loopmates lets you take a photo to attach."
+        }
+      ],
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "LoopQuick",
+              "label": "Loopmates",
+              "description": "Jump to a chat, a call or your runs",
+              "minWidth": "250dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 2,
+              "resizeMode": "horizontal",
+              "updatePeriodMillis": 0
+            }
+          ]
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#FFFFFF",
+          "imageWidth": 200
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": false
+    }
+  }
+}

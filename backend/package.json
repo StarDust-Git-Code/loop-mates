@@ -1,0 +1,35 @@
+{
+  "name": "loopmates-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Loopmates server: the whole backend in one process on the owner's computer (Windows or Linux).",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node bin/loopmates.js run",
+    "server": "node src/server.js",
+    "setup": "node bin/loopmates.js setup",
+    "test": "node scripts/unit.mjs && node scripts/e2e.mjs",
+    "test:browser": "node scripts/browser-test.mjs"
+  },
+  "dependencies": {
+    "@fastify/cors": "^10.0.0",
+    "@fastify/multipart": "^9.0.0",
+    "@google-cloud/firestore": "^7.11.6",
+    "fastify": "^5.0.0",
+    "firebase-admin": "^13.0.0",
+    "pdfjs-dist": "6.4.299",
+    "web-push": "^3.6.7",
+    "ws": "^8.18.0"
+  },
+  "optionalDependencies": {
+    "@whiskeysockets/baileys": "^6.7.0",
+    "playwright-core": "^1.49.1",
+    "selenium-webdriver": "^4.27.0"
+  },
+  "bin": {
+    "loopmates": "bin/loopmates.js"
+  }
+}

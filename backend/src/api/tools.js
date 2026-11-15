@@ -1,0 +1,257 @@
+// Tool registry. Each Mate gets only the tools its "tools" setting grants (Web Search, Memory, Calendar...).
+// Tools are called through a JSON protocol (works with any model, no native function-calling needed).
+import dns from 'node:dns/promises';
+import net from 'node:net';
+import { env, now, uid as rid } from '../lib/env.js';
+import { loadRoster } from './roster.js';
+import { userCol } from './db.js';
+import { searchKnowledge } from './knowledge.js';
+import { putFile, storageReady as artifactsReady } from './files.js';
+
+import { hooks, setToolHooks } from './toolhooks.js';
+import { MONITOR_TOOLS } from './monitor.js';
+import { TOOLKIT, bindWeb } from './toolkit.js';
+import { BROWSER_TOOLS } from './browsertools.js';
+import { DRIVE_TOOLS } from './drivetools.js';
+import { REACH_TOOLS } from './reach.js';
+import { WATCH_TOOLS } from './watch.js';
+import { COMPANY_TOOLS } from './company.js';
+import { INTEGRATION_TOOLS, bindFeedFetch } from '../integrations/index.js';
+import { PYTHON_TOOLS } from './python.js';
+import { REFLECT_TOOLS } from './reflect.js';
+import { bindResearch } from '../research/index.js';
+export { setToolHooks };
+
+const cap = (s, n = 4000) => (s.length > n ? `${s.slice(0, n)}\n…[truncated]` : s);
+const textOf = (h) => h.replace(/<(script|style|noscript|svg)[\s\S]*?<\/\1>/gi, ' ').replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#x27;|&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/\s+/g, ' ').trim();
+const bad = (m) => Object.assign(new Error(m), { tool: true });
+
+/* ---------- network safety: fetch_url must never reach private networks (SSRF) ---------- */
+function privateIp(ip) {
+  if (net.isIPv6(ip)) { const l = ip.toLowerCase(); return l === '::1' || l.startsWith('fc') || l.startsWith('fd') || l.startsWith('fe80') || l.startsWith('::ffff:') && privateIp(l.slice(7)); }
+  const [a, b] = ip.split('.').map(Number);
+  return a === 10 || a === 127 || a === 0 || (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || (a === 100 && b >= 64 && b <= 127) || a >= 224;
+}
+async function assertPublic(urlStr) {
+  let u; try { u = new URL(urlStr); } catch { throw bad('Not a valid URL'); }
+  if (!['http:', 'https:'].includes(u.protocol)) throw bad('Only http(s) URLs are allowed');
+  if (u.port && !['80', '443', ''].includes(u.port)) throw bad('Only standard web ports are allowed');
+  const host = u.hostname.replace(/^\[|\]$/g, '');
+  if (host === 'localhost' || host.endsWith('.local') || host.endsWith('.internal')) throw bad('That address is private');
+  const addrs = net.isIP(host) ? [{ address: host }] : await dns.lookup(host, { all: true }).catch(() => { throw bad('Could not resolve that host'); });
+  if (!addrs.length || addrs.some((a) => privateIp(a.address))) throw bad('That address is private');
+  return u;
+}
+async function safeFetch(url, init = {}, hops = 3) {
+  let cur = url;
+  for (let i = 0; i <= hops; i++) {
+    const u = await assertPublic(cur);
+    const res = await fetch(u, { ...init, redirect: 'manual', signal: AbortSignal.timeout(20_000), headers: { 'user-agent': 'LoopmatesBot/0.1', ...(init.headers ?? {}) } });
+    if (res.status >= 300 && res.status < 400 && res.headers.get('location')) { cur = new URL(res.headers.get('location'), u).toString(); continue; }
+    return res;
+  }
+  throw bad('Too many redirects');
+}
+
+/* ---------- web search ---------- */
+// Preferred: Gemini with Google Search grounding (fast, ~1,500 grounded requests a day on the free tier, no RPM limit).
+// We stop at GROUND_DAILY_CAP (default 1400) and then fall back to Brave or DuckDuckGo. The counter is per API process.
+const ground = { day: '', n: 0 };
+async function groundedSearch(query) {
+  const key = env('GEMINI_API_KEY'); const day = new Date().toISOString().slice(0, 10);
+  if (!key || env('GROUNDED_SEARCH') === 'off') return null;
+  if (ground.day !== day) { ground.day = day; ground.n = 0; }
+  if (ground.n >= Number(env('GROUND_DAILY_CAP', '1400'))) return null;
+  ground.n++;
+  try {
+    const model = env('GEMINI_SEARCH_MODEL', 'gemini-2.5-flash');
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+      method: 'POST', headers: { 'content-type': 'application/json', 'x-goog-api-key': key }, signal: AbortSignal.timeout(25_000),
+      body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: `Search the web and answer with the facts only (specs, numbers, dates, names), tersely, in plain text. Question: ${query}` }] }], tools: [{ google_search: {} }], generationConfig: { maxOutputTokens: 900, temperature: 0.2 } }),
+    });
+    if (!r.ok) return null;
+    const j = await r.json(); const c = j.candidates?.[0];
+    const text = (c?.content?.parts ?? []).map((p) => p.text ?? '').join('').trim(); if (!text) return null;
+    const srcs = [...new Map((c.groundingMetadata?.groundingChunks ?? []).filter((x) => x.web?.uri).map((x) => [x.web.uri, x.web.title ?? x.web.uri])).entries()].slice(0, 5);
+    return `${text}${srcs.length ? `\n\nSources (Google Search via Gemini):\n${srcs.map(([u, n]) => `- ${n}: ${u}`).join('\n')}` : ''}`;
+  } catch { return null; }
+}
+async function search(query) {
+  const g = await groundedSearch(query); if (g) return g;
+  if (env('BRAVE_API_KEY')) {
+    const r = await fetch(`https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(query)}&count=6`, { headers: { 'x-subscription-token': env('BRAVE_API_KEY'), accept: 'application/json' }, signal: AbortSignal.timeout(15_000) });
+    if (!r.ok) throw bad(`Search provider answered ${r.status}`);
+    return ((await r.json()).web?.results ?? []).slice(0, 6).map((x) => `${x.title}\n${x.url}\n${textOf(x.description ?? '')}`).join('\n\n');
+  }
+  // Keyless fallback: DuckDuckGo's HTML endpoint. Unofficial and may rate-limit; set BRAVE_API_KEY for something steadier.
+  const r = await fetch('https://html.duckduckgo.com/html/', { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded', 'user-agent': 'Mozilla/5.0 (compatible; LoopmatesBot/0.1)' }, body: `q=${encodeURIComponent(query)}`, signal: AbortSignal.timeout(15_000) });
+  if (!r.ok) throw bad(`Search is unavailable right now (${r.status})`);
+  const html = await r.text(); const out = [];
+  const re = /<a[^>]+class="result__a"[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>[\s\S]*?(?:class="result__snippet"[^>]*>([\s\S]*?)<\/a>)?/g;
+  let m;
+  while ((m = re.exec(html)) && out.length < 6) {
+    let href = m[1]; const q = /[?&]uddg=([^&]+)/.exec(href); if (q) href = decodeURIComponent(q[1]);
+    out.push(`${textOf(m[2])}\n${href}\n${textOf(m[3] ?? '')}`);
+  }
+  if (!out.length) throw bad('No results (the search endpoint may be rate-limiting). Try fetch_url on a known page.');
+  return out.join('\n\n');
+}
+
+/* ---------- helpers ---------- */
+const score = (text, terms) => { const low = text.toLowerCase(); return terms.reduce((s, t) => s + (low.includes(t) ? 1 : 0), 0); };
+const termsOf = (q) => (String(q).toLowerCase().match(/[\p{L}\p{N}]{3,}/gu) ?? []).slice(0, 10);
+const iso = (v, label) => { const t = Date.parse(v); if (!Number.isFinite(t)) throw bad(`${label} must be an ISO date-time like 2026-11-05T09:00:00+05:30`); return new Date(t).toISOString(); };
+
+const NODE_TYPES = ['trigger', 'knowledge', 'input', 'mate', 'tool', 'condition', 'transform', 'filter', 'output'];
+const WF_TOOLS = {
+  workflow_list: { group: 'Workflows', desc: 'List the owner\'s workflows.', args: '{}', run: async (c) => {
+    const rows = (await userCol(c.uid, 'workflows').limit(100).get()).docs.map((d) => ({ id: d.id, ...d.data() }));
+    return rows.length ? rows.map((w) => `${w.id} | ${w.name} | ${(w.nodes ?? []).length} nodes | ${w.state ?? 'draft'}`).join('\n') : 'No workflows yet.';
+  } },
+  workflow_get: { group: 'Workflows', desc: 'Read one workflow: its nodes in order.', args: '{"id": "workflow id"}', run: async (c, a) => {
+    const w = (await userCol(c.uid, 'workflows').doc(String(a.id ?? '')).get()).data(); if (!w) throw bad('No such workflow');
+    const byId = new Map(w.nodes.map((n) => [n.id, n])); const next = new Map((w.edges ?? []).map((e) => [e.from, e.to]));
+    const hasIn = new Set((w.edges ?? []).map((e) => e.to)); let cur = w.nodes.find((n) => !hasIn.has(n.id)) ?? w.nodes[0]; const seen = new Set(); const out = [];
+    while (cur && !seen.has(cur.id)) { seen.add(cur.id); out.push(`${out.length + 1}. [${cur.type}${cur.mate ? `:${cur.mate}` : ''}] ${cur.label}${cur.config && Object.keys(cur.config).length ? ` ${JSON.stringify(cur.config)}` : ''}`); cur = byId.get(next.get(cur.id)); }
+    return `${w.name}: ${w.description ?? ''}\n${out.join('\n') || '(empty)'}`;
+  } },
+  workflow_save: { group: 'Workflows', write: true, desc: 'Create or replace a workflow on the Studio canvas as a chain of steps. Pass id to update an existing one, otherwise a new one is created.',
+    args: '{"id?": "existing workflow id to update", "name": "workflow name", "description?": "one-line purpose", "steps": "ordered steps"}',
+    props: { steps: { type: 'array', description: 'Ordered steps of the chain.', items: { type: 'object', properties: { type: { type: 'string', enum: NODE_TYPES }, mate: { type: 'string', description: 'Roster key for mate/tool steps, e.g. research, writer, code' }, label: { type: 'string', description: 'What this step does and outputs' }, config: { type: 'object', description: 'Optional, e.g. {"repo":"owner/name"} for code steps' } }, required: ['label'] } } },
+    run: async (c, a) => {
+      let steps = a.steps; if (typeof steps === 'string') { try { steps = JSON.parse(steps); } catch { throw bad('steps must be a JSON array'); } }
+      if (!Array.isArray(steps) || !steps.length) throw bad('steps must be a non-empty array'); if (steps.length > 12) throw bad('At most 12 steps');
+      const name = String(a.name ?? '').trim().slice(0, 80); if (!name) throw bad('name is required');
+      const ro = await loadRoster(c.uid);
+      const warn = []; const nodes = steps.map((s, i) => {
+        const type = NODE_TYPES.includes(s?.type) ? s.type : 'mate'; const label = String(s?.label ?? '').trim().slice(0, 100); if (!label) throw bad(`Step ${i + 1} needs a label`);
+        let mate = s?.mate && ro.has(s.mate) ? s.mate : undefined;
+        if ((type === 'mate' || type === 'tool') && !mate) { if (s?.mate) throw bad(`Step ${i + 1}: unknown mate "${s.mate}"`); mate = type === 'tool' ? 'ops' : 'research'; warn.push(`Step ${i + 1} had no mate, using ${mate}.`); }
+        if (mate && !ro.on(mate)) warn.push(`${mate} is switched off; turn it on in Agents or the run will use Ops.`);
+        if (!['mate', 'tool', 'output', 'trigger'].includes(type)) warn.push(`Step ${i + 1} (${type}) is documentation only: the engine skips it.`);
+        const config = s?.config && typeof s.config === 'object' ? Object.fromEntries(Object.entries(s.config).slice(0, 6).map(([k, v]) => [k, String(v).slice(0, 200)])) : undefined;
+        return { id: rid(), type, label, ...(mate && (type === 'mate' || type === 'tool') ? { mate } : {}), x: 40 + i * 240, y: 80, ...(config && Object.keys(config).length ? { config } : {}) };
+      });
+      const edges = nodes.slice(1).map((n, i) => ({ id: rid(), from: nodes[i].id, to: n.id }));
+      const col = userCol(c.uid, 'workflows'); let ref = a.id ? col.doc(String(a.id)) : null; const prev = ref ? (await ref.get()).data() : null;
+      if (a.id && !prev) throw bad('No workflow with that id');
+      if (!ref) { const same = (await col.limit(100).get()).docs.find((d) => d.data().name?.toLowerCase() === name.toLowerCase()); ref = same ? same.ref : col.doc(); }
+      const ts = now(); const existing = prev ?? (await ref.get()).data();
+      await ref.set({ ...(existing ?? { createdAt: ts, state: 'draft' }), name, description: String(a.description ?? existing?.description ?? '').slice(0, 300), nodes, edges, updatedAt: ts });
+      return `Saved workflow "${name}" (${ref.id}) with ${nodes.length} steps.${warn.length ? `\nWarnings:\n- ${warn.join('\n- ')}` : ''}\nThe owner can open Studio to review it and press Test Run.`;
+    } },
+};
+
+bindWeb({ safeFetch });
+bindFeedFetch(safeFetch);
+bindResearch({ safeFetch, search });
+
+const RESEARCH_TOOLS = {
+  deep_research: { group: 'Deep Research', write: true, desc: 'Start a DEEP research run on primary documents: datasheets and application notes (exact ratings, comparisons of parts), patents (claims, priority dates, families, a claim chart against a product) or claims in general (is this vendor/paper claim backed by evidence?). It collects the documents (the owner\'s uploads, addresses you give, patent records, PDFs found by search), reads them page by page, checks every quote against its page and writes a cited report. Takes minutes, so use web_search for quick facts. Returns the run id; the report lands in the run\'s files.', args: '{"question": "what to find out, with part or patent numbers", "parameters?": ["for datasheets: what to compare"], "target?": "for patents: product or document to chart against", "sources?": ["https://... primary documents you already know"], "fileIds?": ["ids of uploaded files to use"]}', run: async (c, a) => {
+    if (!hooks.startRun) throw bad('Runs are unavailable right now.');
+    const q = String(a.question ?? '').trim(); if (q.length < 8) throw bad('question is required');
+    const arr = (v) => (Array.isArray(v) ? v : v ? String(v).split(/[\n;]+/) : []).map((x) => String(x).trim()).filter(Boolean).slice(0, 20);
+    const run = await hooks.startRun(c.uid, { prompt: q.slice(0, 4000), mode: 'research', title: `Research: ${q.split('\n')[0]}`.slice(0, 80), fileIds: arr(a.fileIds), research: { parameters: arr(a.parameters), target: String(a.target ?? '').slice(0, 300), sources: arr(a.sources).filter((u) => /^https?:\/\//.test(u)) }, unattended: true });
+    return `Started deep research run ${run.id} ("${run.title}"). It collects and reads the primary documents, checks every quote against its page, and saves a cited report in the run's files. The owner can follow it in Runs.`;
+  } },
+};
+
+/** name -> { group, desc, args, run(ctx, args) }  ctx = { uid, settings } */
+export const TOOLS = {
+  ...MONITOR_TOOLS,
+  ...TOOLKIT,
+  ...BROWSER_TOOLS,
+  ...DRIVE_TOOLS,
+  ...WF_TOOLS,
+  ...REACH_TOOLS,
+  ...WATCH_TOOLS,
+  ...COMPANY_TOOLS,
+  ...INTEGRATION_TOOLS,
+  ...PYTHON_TOOLS,
+  ...REFLECT_TOOLS,
+  ...RESEARCH_TOOLS,
+  web_search: { group: 'Web Search', net: true, desc: 'Search the web (Google-grounded). Fast: use this for specs, prices, facts and news instead of opening a browser. Returns an answer with source links.', args: '{"query": "text"}', run: async (_c, a) => cap(await search(String(a.query ?? '').slice(0, 200))) },
+  fetch_url: { group: 'Web Search', net: true, desc: 'Open a public web page and read its text.', args: '{"url": "https://..."}', run: async (_c, a) => {
+    const res = await safeFetch(String(a.url));
+    if (!res.ok) throw bad(`The page answered ${res.status}`);
+    const type = res.headers.get('content-type') || '';
+    if (!/text|json|xml/.test(type)) throw bad(`Cannot read ${type || 'that file type'}`);
+    const body = (await res.text()).slice(0, 400_000);
+    return cap(type.includes('html') ? textOf(body) : body, 6000);
+  } },
+  knowledge_search: { group: 'Vector Search', desc: "Search the owner's Knowledge library (notes, links, files).", args: '{"query": "text"}', run: async (c, a) => {
+    const hits = await searchKnowledge(c.uid, String(a.query ?? ''), c.settings?.topK || 5);
+    return hits.length ? hits.map((h) => `[${h.name}] ${h.snippet}`).join('\n') : 'No matching knowledge.';
+  } },
+  calendar_add: { group: 'Calendar', write: true, desc: 'Add an event or a reminder to the calendar. Reminders message the owner at that time; with deliver "call" the leader phones them instead ("call me at 6 to remind me about X").', args: '{"title": "text", "start": "ISO date-time with offset", "end": "optional ISO", "kind?": "event|reminder", "notes": "optional", "deliver?": "notify|call"}', run: async (c, a) => {
+    const start = iso(a.start, 'start'); const end = a.end ? iso(a.end, 'end') : new Date(Date.parse(start) + 30 * 60_000).toISOString();
+    const doc = { title: String(a.title ?? '').slice(0, 200) || 'Untitled', start, end, kind: a.kind === 'event' ? 'event' : 'reminder', notes: String(a.notes ?? '').slice(0, 1000), deliver: a.deliver === 'call' ? 'call' : 'notify', ...(c.mate ? { mate: String(c.mate) } : {}), createdAt: now(), updatedAt: now() };
+    const ref = userCol(c.uid, 'events').doc(); await ref.set(doc); await hooks.events?.(c.uid, ref.id, doc, 'set');
+    return `Added ${doc.kind} "${doc.title}" at ${start}${doc.deliver === 'call' ? ' (I will call)' : ''}.`;
+  } },
+  calendar_list: { group: 'Calendar', desc: 'List calendar events and reminders (optionally from/to ISO dates).', args: '{"from": "optional ISO", "to": "optional ISO"}', run: async (c, a) => {
+    const from = a.from ? Date.parse(a.from) : Date.now() - 86_400_000, to = a.to ? Date.parse(a.to) : Date.now() + 30 * 86_400_000;
+    const snap = await userCol(c.uid, 'events').limit(300).get();
+    const rows = snap.docs.map((d) => d.data()).filter((e) => { const t = Date.parse(e.start); return t >= from && t <= to; }).sort((x, y) => x.start.localeCompare(y.start)).slice(0, 25);
+    return rows.length ? rows.map((e) => `- ${e.start} [${e.kind}] ${e.title}`).join('\n') : 'Nothing scheduled in that range.';
+  } },
+  task_add: { group: 'Calendar', write: true, desc: 'Add a to-do task (optionally with a due date; due tasks ping on Telegram).', args: '{"title": "text", "detail": "optional", "dueAt": "optional ISO"}', run: async (c, a) => {
+    const doc = { title: String(a.title ?? '').slice(0, 200) || 'Untitled', detail: String(a.detail ?? '').slice(0, 2000), status: 'todo', tags: [], ...(a.dueAt ? { dueAt: iso(a.dueAt, 'dueAt') } : {}), createdAt: now(), updatedAt: now() };
+    const ref = userCol(c.uid, 'tasks').doc(); await ref.set(doc); await hooks.tasks?.(c.uid, ref.id, doc, 'set');
+    return `Added task "${doc.title}".`;
+  } },
+  task_list: { group: 'Calendar', desc: 'List tasks (status: todo|doing|done, default not done).', args: '{"status": "optional"}', run: async (c, a) => {
+    const snap = await userCol(c.uid, 'tasks').limit(300).get();
+    const rows = snap.docs.map((d) => d.data()).filter((t) => (a.status ? t.status === a.status : t.status !== 'done')).slice(0, 25);
+    return rows.length ? rows.map((t) => `- [${t.status}] ${t.title}${t.dueAt ? ` (due ${t.dueAt})` : ''}`).join('\n') : 'No tasks.';
+  } },
+  file_write: { group: 'File System', write: true, desc: 'Save a text file (Markdown, CSV, code...) to the owner\'s Drive.', args: '{"name": "report.md", "content": "text"}', needsApproval: true, run: async (c, a) => {
+    if (!artifactsReady()) throw bad('File storage is not configured yet.');
+    const name = String(a.name ?? 'file.txt').replace(/[\\/:*?"<>|]/g, '_').slice(0, 100); const content = String(a.content ?? '');
+    const f = await putFile(c.uid, { name, mime: name.endsWith('.md') ? 'text/markdown' : 'text/plain', buf: Buffer.from(content, 'utf8'), source: 'run', runId: c.runId });
+    return `Saved ${name} (${f.size} bytes) to Drive.`;
+  } },
+  chat_history: { group: '*', desc: 'Look back in THIS chat beyond what is shown: the first messages, the latest ones, or messages matching words.', args: '{"which?": "start|end", "query?": "words to find", "n?": "how many, max 20"}', run: async (c, a) => {
+    if (!c.convId) throw bad('No chat is open');
+    const conv = (await userCol(c.uid, 'conversations').doc(c.convId).get()).data(); const msgs = (conv?.messages ?? []).filter((m) => m.role !== 'system');
+    const n = Math.min(Number(a.n) || 8, 20); let rows;
+    if (a.query) { const t = termsOf(a.query); rows = msgs.map((m, i) => ({ m, i, s: score(m.text, t) })).filter((x) => x.s).sort((x, y) => y.s - x.s).slice(0, n).sort((x, y) => x.i - y.i); }
+    else rows = (a.which === 'end' ? msgs.slice(-n) : msgs.slice(0, n)).map((m, i) => ({ m, i: a.which === 'end' ? msgs.length - n + i : i }));
+    return rows.length ? rows.map(({ m, i }) => `#${i + 1} ${m.role === 'user' ? 'owner' : m.mate ?? 'mate'} (${m.at?.slice(0, 16)}): ${m.text.slice(0, 400)}`).join('\n') : 'Nothing found.';
+  } },
+  calculate: { group: '*', desc: 'Evaluate an arithmetic expression exactly (numbers, + - * / % ** and parentheses).', args: '{"expression": "(12.5*4)/3"}', run: async (_c, a) => {
+    const e = String(a.expression ?? '');
+    if (!/^[\d\s+\-*/%().]+$/.test(e) || e.length > 200) throw bad('Only numbers and + - * / % ** ( ) are allowed');
+    const v = Function(`"use strict"; return (${e});`)();
+    if (typeof v !== 'number' || !Number.isFinite(v)) throw bad('Not a finite number');
+    return String(v);
+  } },
+};
+
+/** Which tools a Mate may use, given its configured tool groups and the workspace settings. */
+/** Always-on extras per Mate (on top of what its config lists). */
+const DELEGATORS = ['Delegation', 'Run Control'];
+// Integration groups (Notes, Google, Team Chat, Task Apps, Music, Feeds, Health, Home) go to the Mates whose job fits.
+// Their tools only show up once the integration is set up (each tool's ready()), so an unlinked app costs nothing.
+const EXTRA_GROUPS = {
+  '*': ['Utilities'],
+  mimo: ['Delegation', 'Web Search', 'Vector Search', 'File System', 'Browser', 'Notes', 'Google', 'Task Apps', 'Home', 'Deep Research'],
+  ops: [...DELEGATORS, 'Home', 'Team Chat'], halo: DELEGATORS, planner: [...DELEGATORS, 'Task Apps', 'Google'], flow: ['Delegation'],
+  research: ['Delegation', 'Feeds', 'Notes', 'Deep Research'], scout: ['Feeds', 'Deep Research'], writer: ['Notes', 'Google'], recall: ['Notes'],
+  orbit: ['Google', 'Task Apps'], zen: ['Google', 'Health', 'Home'], luna: ['Health', 'Notes'], chef: ['Task Apps'], tune: ['Music'],
+  data: ['Health', 'Deep Research'], byte: ['Task Apps'], code: ['Task Apps'],
+};
+const LEAD_GROUPS = ['Delegation', 'Run Control', 'Web Search', 'Vector Search', 'Memory', 'Calendar', 'Company', 'Notes', 'Google', 'Task Apps', 'Home', 'Team Chat', 'Deep Research'];
+/** leader = the roster's leader key: it always gets the delegation and planning tools. */
+export function toolsFor(groups = [], settings = {}, mateKey = '', leader = '') {
+  const g = new Set([...groups, ...EXTRA_GROUPS['*'], ...(EXTRA_GROUPS[mateKey] ?? []), ...(mateKey && mateKey === leader ? LEAD_GROUPS : [])]);
+  const ready = (t) => { if (!t.ready) return true; try { return !!t.ready(); } catch { return false; } };
+  return Object.entries(TOOLS).filter(([, t]) => (t.group === '*' || g.has(t.group)) && ready(t) && !(t.net && settings.allowNetwork === false) && !(t.needsApproval && settings.permissionMode !== 'auto')).map(([name, t]) => ({ name, ...t }));
+}
+
+export async function runTool(name, args, ctx, allowed) {
+  const t = allowed.find((x) => x.name === name);
+  if (!t) return { ok: false, text: `Unknown or disallowed tool "${name}".` };
+  try { return { ok: true, text: cap(String(await t.run(ctx, args && typeof args === 'object' ? args : {}))) }; }
+  catch (e) { return { ok: false, text: `Tool error: ${e.tool ? e.message : 'failed'}${e.tool ? '' : ` (${String(e.message).slice(0, 120)})`}` }; }
+}

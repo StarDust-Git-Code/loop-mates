@@ -1,0 +1,1823 @@
+/* Loopmates: the house. One pinned stage, scrubbed by scroll (html.film).
+   Without .film (no JS, or reduced motion) the same words read as ordinary stacked sections. */
+
+:root {
+  --night: #120e2e;
+  --night-2: #1b1450;
+  --ink: #1a1438;
+  --cream: #fbf4e6;
+  --cream-2: #e8e0f5;
+  --muted: #c9c0e0;
+  --lamp: #ffd27a;
+  --gut: clamp(20px, 4.2vw, 64px);
+  --serif: var(--font-serif), "Iowan Old Style", Georgia, serif;
+  --sans: var(--font-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--night);
+  color: var(--cream);
+}
+
+body {
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+img {
+  display: block;
+  max-width: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+a {
+  color: inherit;
+}
+
+p {
+  margin: 0;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-optical-sizing: auto;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+
+:focus-visible {
+  outline: 2px solid var(--lamp);
+  outline-offset: 3px;
+}
+
+.sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------- nav */
+
+.nav {
+  position: fixed;
+  z-index: 50;
+  inset: 0 0 auto 0;
+  height: 76px;
+  padding: 0 var(--gut);
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  pointer-events: none;
+}
+.nav > * {
+  pointer-events: auto;
+}
+.nav-word {
+  font-family: var(--serif);
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  text-decoration: none;
+}
+.nav nav {
+  margin-left: auto;
+  display: flex;
+  gap: 30px;
+}
+.nav nav a {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--cream-2);
+  text-decoration: none;
+  text-shadow: 0 1px 8px rgba(10, 8, 30, 0.75);
+  transition: color 0.2s;
+}
+.nav nav a:hover {
+  color: var(--cream);
+}
+.nav-join {
+  display: inline-flex;
+  align-items: center;
+  height: 42px;
+  padding: 0 18px;
+  border-radius: 999px;
+  background: rgba(20, 16, 50, 0.4);
+  border: 1px solid rgba(251, 244, 230, 0.32);
+  -webkit-backdrop-filter: blur(16px) saturate(120%);
+  backdrop-filter: blur(16px) saturate(120%);
+  font-size: 14.5px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+.nav-join:hover {
+  background: rgba(20, 16, 50, 0.58);
+}
+@media (max-width: 760px) {
+  .nav nav {
+    display: none;
+  }
+  .nav-join {
+    margin-left: auto;
+  }
+}
+
+/* ---------------------------------------------------------------- buttons */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 52px;
+  padding: 0 24px;
+  border-radius: 999px;
+  font-size: 15.5px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: transform 0.25s ease, background 0.25s ease;
+}
+.btn-solid {
+  background: var(--cream);
+  color: var(--ink);
+}
+.btn-solid:hover {
+  background: #fff;
+  transform: translateY(-1px);
+}
+.btn-ghost {
+  background: rgba(20, 16, 50, 0.4);
+  border: 1px solid rgba(251, 244, 230, 0.32);
+  -webkit-backdrop-filter: blur(16px) saturate(120%);
+  backdrop-filter: blur(16px) saturate(120%);
+  font-weight: 500;
+}
+.btn-ghost:hover {
+  background: rgba(20, 16, 50, 0.58);
+}
+
+/* ---------------------------------------------------------------- the stage */
+
+.film {
+  position: relative;
+}
+html.film .film {
+  height: 100vh;
+  height: 100svh;
+  overflow: hidden;
+  background: var(--night);
+}
+html:not(.film) .stage {
+  display: none;
+}
+
+.stage {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+/* the room the laptop sits in, only seen when the camera pulls back */
+.den {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(34% 9% at 70% 80.5%, rgba(255, 214, 160, 0.26), transparent 72%),
+    radial-gradient(52% 20% at 70% 84%, rgba(150, 120, 255, 0.2), transparent 72%),
+    radial-gradient(58% 58% at 70% 46%, rgba(110, 84, 240, 0.34), transparent 70%),
+    radial-gradient(120% 90% at 70% 40%, transparent 55%, rgba(0, 0, 0, 0.55) 100%),
+    linear-gradient(180deg, #0c0a1c 0%, #141030 73.5%, #2e2236 73.6%, #221827 84%, #140d18 100%);
+}
+
+.device {
+  --lap: 0;
+  --it: 0px;
+  --il: 0px;
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 50%;
+}
+.screen {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: var(--night);
+  /* a plain rectangle: cheap to change every frame. The bezel's ring draws the rounded corners over it. */
+  clip-path: inset(calc(var(--it) * var(--lap)) calc(var(--il) * var(--lap)));
+}
+.bezel {
+  position: absolute;
+  inset: calc(var(--it) * var(--lap)) calc(var(--il) * var(--lap));
+  border-radius: 16px;
+  opacity: var(--lap);
+  pointer-events: none;
+  will-change: opacity;
+  box-shadow:
+    0 0 0 28px #0b0a10,
+    0 0 0 29.5px #34313f;
+}
+.bezel i {
+  position: absolute;
+  left: 50%;
+  top: -16px;
+  width: 7px;
+  height: 7px;
+  margin-left: -3.5px;
+  border-radius: 50%;
+  background: #1d1b25;
+  box-shadow: inset 0 0 0 1.5px #3a3746;
+}
+.deck {
+  position: absolute;
+  left: calc(var(--il) * var(--lap) - 5%);
+  right: calc(var(--il) * var(--lap) - 5%);
+  top: calc(100% - var(--it) * var(--lap) + 29px);
+  height: 5.4vmin;
+  opacity: var(--lap);
+  will-change: opacity;
+  background: linear-gradient(180deg, #4a4658 0%, #2b2836 22%, #1b1923 70%, #0f0e14 100%);
+  clip-path: polygon(0 0, 100% 0, 99.2% 72%, 97.6% 100%, 2.4% 100%, 0.8% 72%);
+}
+.deck::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 14%;
+  height: 22%;
+  transform: translateX(-50%);
+  border-radius: 0 0 12px 12px;
+  background: #15131b;
+}
+
+/* ---------------------------------------------------------------- outside */
+
+.ext,
+.int-cam {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+}
+.ext > img,
+.int-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  will-change: transform;
+}
+/* the picture's top edge melts into .sky-ext, which carries the sky on upwards (a strip, not a mask: masks are slow to zoom) */
+.ext-top {
+  position: absolute;
+  left: 0;
+  top: -1px;
+  width: 100%;
+  height: 64px;
+  background: linear-gradient(180deg, #131344, rgba(19, 19, 68, 0));
+}
+.sky-ext {
+  position: absolute;
+  left: 0;
+  top: -1400px;
+  width: 100%;
+  height: 1462px;
+  background: linear-gradient(180deg, #05041a 0%, #0b0a2c 50%, #131344 100%);
+}
+
+.win {
+  position: absolute;
+  background-image: url(/house/night.webp);
+  background-size: 1672px 941px;
+  background-repeat: no-repeat;
+  -webkit-mask-image: radial-gradient(closest-side, #000 58%, transparent 100%);
+  mask-image: radial-gradient(closest-side, #000 58%, transparent 100%);
+  /* each window fades on its own layer: no repaint of the house while the lights go out */
+  will-change: opacity;
+}
+
+.house-glow {
+  position: absolute;
+  left: 1110px;
+  top: 690px;
+  width: 760px;
+  height: 560px;
+  margin: -280px 0 0 -380px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255, 200, 110, 0.55), rgba(255, 200, 110, 0));
+  opacity: 0;
+}
+
+.smoke {
+  position: absolute;
+  left: 1201px;
+  top: 486px;
+}
+.puff {
+  position: absolute;
+  left: -22px;
+  top: -22px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(236, 230, 255, 0.5), rgba(236, 230, 255, 0) 68%);
+  opacity: 0;
+  animation: puff 6.4s linear infinite;
+}
+@keyframes puff {
+  0% {
+    transform: translate(0, 0) scale(0.35);
+    opacity: 0;
+  }
+  14% {
+    opacity: 0.75;
+  }
+  100% {
+    transform: translate(48px, -160px) scale(2.5);
+    opacity: 0;
+  }
+}
+
+.star {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  margin: -2px 0 0 -2px;
+  border-radius: 50%;
+  background: #fff7e0;
+  box-shadow: 0 0 5px 1.5px rgba(255, 240, 200, 0.55);
+  opacity: 0;
+  animation: twinkle 4s ease-in-out infinite;
+}
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+}
+
+.fly {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #ffeab0;
+  box-shadow: 0 0 8px 3px rgba(255, 214, 120, 0.6);
+  opacity: 0;
+  animation: fly 9s ease-in-out infinite;
+}
+@keyframes fly {
+  0% {
+    transform: translate(0, 0);
+    opacity: 0;
+  }
+  18% {
+    opacity: 0.95;
+  }
+  50% {
+    transform: translate(30px, -24px);
+    opacity: 0.35;
+  }
+  70% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate(0, 0);
+    opacity: 0;
+  }
+}
+
+.grass {
+  position: absolute;
+  left: -6vw;
+  right: -6vw;
+  bottom: -1.5vh;
+  transform-origin: 50% 100%;
+  pointer-events: none;
+}
+.grass-in {
+  width: 100%;
+  height: auto;
+  will-change: transform;
+}
+
+/* ---------------------------------------------------------------- inside */
+
+.int {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background: var(--night);
+}
+/* the cutaway's edges fade into the night around it */
+.edge {
+  position: absolute;
+  pointer-events: none;
+}
+.edge-l,
+.edge-r {
+  top: -2px;
+  bottom: -2px;
+  width: 140px;
+}
+.edge-l {
+  left: -2px;
+  background: linear-gradient(90deg, var(--night), rgba(18, 14, 46, 0));
+}
+.edge-r {
+  right: -2px;
+  background: linear-gradient(270deg, var(--night), rgba(18, 14, 46, 0));
+}
+.edge-t,
+.edge-b {
+  left: -2px;
+  right: -2px;
+  height: 64px;
+}
+.edge-t {
+  top: -2px;
+  background: linear-gradient(180deg, var(--night), rgba(18, 14, 46, 0));
+}
+.edge-b {
+  bottom: -2px;
+  background: linear-gradient(0deg, var(--night), rgba(18, 14, 46, 0));
+}
+.int-dim {
+  position: absolute;
+  inset: 0;
+  background: rgba(12, 9, 32, 0.5);
+  opacity: 0;
+}
+.fire {
+  position: absolute;
+  width: 170px;
+  height: 120px;
+  margin: -60px 0 0 -85px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255, 168, 70, 0.55), rgba(255, 168, 70, 0));
+  animation: flicker 2.6s ease-in-out infinite;
+}
+@keyframes flicker {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  11% {
+    opacity: 0.9;
+  }
+  23% {
+    opacity: 0.6;
+  }
+  37% {
+    opacity: 1;
+  }
+  52% {
+    opacity: 0.7;
+  }
+  66% {
+    opacity: 0.95;
+  }
+  81% {
+    opacity: 0.5;
+  }
+}
+
+.mate {
+  position: absolute;
+}
+.mate-h,
+.mate-b {
+  width: 100%;
+  height: 100%;
+}
+.mate-b {
+  transform-origin: 50% 100%;
+  animation: bob 3s ease-in-out infinite;
+}
+.mate-b img {
+  width: 100%;
+  height: 100%;
+  will-change: transform;
+}
+.mate-b {
+  position: relative;
+}
+.mate-b::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 10%;
+  right: 10%;
+  bottom: -4px;
+  height: 10px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(24, 12, 30, 0.6), rgba(24, 12, 30, 0));
+}
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateY(0) scale(1, 1);
+  }
+  50% {
+    transform: translateY(-2.5px) scale(1.012, 0.988);
+  }
+}
+
+.ring {
+  position: absolute;
+  width: 130px;
+  height: 130px;
+  margin: -65px 0 0 -65px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 210, 122, 0.85);
+  opacity: 0;
+}
+.ring::after {
+  content: "";
+  position: absolute;
+  inset: -16px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 210, 122, 0.5);
+  animation: ring 1.6s ease-out infinite;
+}
+@keyframes ring {
+  0% {
+    transform: scale(0.75);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1.45);
+    opacity: 0;
+  }
+}
+
+.spot-cv {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.paths {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+.paths .guide {
+  stroke: none;
+}
+.trail {
+  stroke: var(--lamp);
+  stroke-width: 2.8;
+  stroke-dasharray: 2 9;
+  stroke-linecap: round;
+}
+.letter rect {
+  fill: #fff3d6;
+  stroke: var(--ink);
+  stroke-width: 1.6;
+}
+.letter path {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+}
+.plane path {
+  fill: #fff3d6;
+  stroke: var(--ink);
+  stroke-width: 1.4;
+  stroke-linejoin: round;
+}
+.note {
+  fill: var(--lamp);
+  filter: drop-shadow(0 0 6px rgba(255, 210, 122, 0.9));
+}
+.ex-line {
+  fill: none;
+  stroke: rgba(251, 244, 230, 0.85);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.ex-ghost {
+  opacity: 0;
+}
+.ex-ghost circle {
+  fill: rgba(251, 244, 230, 0.08);
+  stroke: rgba(251, 244, 230, 0.85);
+  stroke-width: 2;
+  stroke-dasharray: 5 6;
+}
+.ex-ghost text {
+  fill: var(--cream);
+  font-family: var(--serif);
+  font-size: 34px;
+}
+
+.tag {
+  position: absolute;
+  white-space: nowrap;
+  padding: 6px 11px;
+  border-radius: 11px;
+  background: var(--cream);
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.2;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
+}
+.tag b {
+  font-weight: 600;
+}
+
+/* the warm light you fly through, between the outside and the inside */
+.glow {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 100vmax;
+  height: 100vmax;
+  margin: -50vmax 0 0 -50vmax;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, #fff6e0 0%, #ffe4ac 34%, #ffc874 62%, rgba(255, 200, 116, 0) 100%);
+  opacity: 0;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.loops {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.loops canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+/* the canvas overhangs the frame on every side, so the rings are never clipped while the frame is scaled down */
+.loops-in {
+  position: absolute;
+  inset: -35%;
+}
+
+.scrim-side,
+.scrim-top {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+.scrim-top {
+  opacity: 1;
+  background: linear-gradient(180deg, rgba(10, 8, 30, 0.6) 0%, rgba(10, 8, 30, 0.24) 40%, rgba(10, 8, 30, 0) 60%);
+}
+.scrim-side {
+  background: linear-gradient(90deg, rgba(10, 8, 28, 0.88) 0%, rgba(10, 8, 28, 0.66) 27%, rgba(10, 8, 28, 0) 52%);
+}
+
+/* ---------------------------------------------------------------- the words */
+
+.copy {
+  position: relative;
+}
+html.film .copy {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+}
+html.film .sc {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+html.film .sc-hero {
+  opacity: 1;
+  pointer-events: auto;
+}
+html.film .sc-bg {
+  display: none;
+}
+.copy {
+  /* a tight shadow only: wide blurred text shadows are slow to draw every time a block of words fades in */
+  text-shadow: 0 1px 3px rgba(10, 8, 30, 0.35);
+}
+
+.col {
+  position: absolute;
+  left: var(--gut);
+  top: 50%;
+  width: min(450px, 31vw);
+  transform: translateY(-50%);
+}
+.col > h2 {
+  font-size: clamp(36px, 3.6vw, 56px);
+  line-height: 1.02;
+}
+.col > p {
+  margin-top: 18px;
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--cream-2);
+}
+
+/* hero */
+.sc-hero .col {
+  top: 17vh;
+  width: min(700px, 54vw);
+  transform: none;
+}
+.sc-hero h1 {
+  font-size: clamp(56px, 7.4vw, 114px);
+  line-height: 0.94;
+  letter-spacing: -0.035em;
+}
+.ln {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 0.07em;
+}
+.ln > span {
+  display: block;
+}
+.lede {
+  margin-top: 26px;
+  max-width: 470px;
+  font-size: 18.5px;
+  line-height: 1.55;
+  color: var(--cream-2);
+}
+.cta {
+  margin-top: 30px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* what is it */
+.sc-what .col {
+  width: min(520px, 36vw);
+}
+.what-p {
+  font-family: var(--serif);
+  font-size: clamp(22px, 2.05vw, 31px) !important;
+  line-height: 1.32 !important;
+  color: var(--cream) !important;
+  letter-spacing: -0.01em;
+}
+
+/* the tour */
+html.film .sc-tour {
+  opacity: 0;
+}
+.rooms {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+html.film .rooms {
+  position: absolute;
+  left: var(--gut);
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  width: min(440px, 31vw);
+}
+html.film .room-card {
+  grid-area: 1 / 1;
+  align-self: center;
+}
+.rc-faces {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 62px;
+  margin-bottom: 18px;
+}
+.rc-faces img {
+  width: 58px;
+  height: auto;
+  filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.4));
+}
+.rc-ghost {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 2px dashed rgba(251, 244, 230, 0.6);
+  font-family: var(--serif);
+  font-size: 28px;
+}
+.rc-room {
+  margin-bottom: 6px;
+  font-size: 15px;
+  color: var(--muted);
+}
+.rc-count {
+  color: rgba(201, 192, 224, 0.6);
+}
+.room-card h3 {
+  margin-bottom: 14px;
+  font-size: clamp(34px, 3.3vw, 50px);
+  line-height: 1.02;
+}
+.rc-line {
+  font-size: 16.5px;
+  line-height: 1.55;
+  color: var(--cream-2);
+}
+.rc-ask {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+.rc-say {
+  font-size: 13.5px;
+  color: var(--muted);
+}
+.bubble {
+  padding: 11px 16px;
+  border-radius: 18px 18px 18px 5px;
+  background: var(--cream);
+  color: var(--ink);
+  font-size: 15.5px;
+  line-height: 1.4;
+  text-shadow: none;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.35);
+}
+.map {
+  position: absolute;
+  left: var(--gut);
+  bottom: 6vh;
+  width: 118px;
+  height: auto;
+  opacity: 0;
+  overflow: visible;
+}
+.map .cell,
+.map-roof {
+  fill: none;
+  stroke: rgba(251, 244, 230, 0.35);
+  stroke-width: 8;
+  stroke-linejoin: round;
+}
+.map .cell-x {
+  stroke-dasharray: 18 14;
+}
+.map .cell-on {
+  fill: var(--lamp);
+  stroke: var(--lamp);
+  stroke-width: 8;
+}
+
+/* how it works */
+.steps {
+  list-style: none;
+  margin: 26px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+.step {
+  display: flex;
+  gap: 14px;
+}
+.step .n {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid rgba(251, 244, 230, 0.55);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.step p {
+  font-size: 15.5px;
+  line-height: 1.5;
+}
+.step .q {
+  display: block;
+  margin-top: 4px;
+  font-family: var(--serif);
+  font-size: 17px;
+  color: var(--lamp);
+}
+html.film .step .jobs {
+  display: none;
+}
+
+/* Halo */
+.approve {
+  margin-top: 26px;
+  width: min(400px, 100%);
+  padding: 18px 20px;
+  border-radius: 22px;
+  background: var(--cream);
+  color: var(--ink);
+  text-shadow: none;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.ap-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.ap-head img {
+  width: 46px;
+  height: auto;
+}
+.ap-t {
+  font-size: 15.5px;
+  font-weight: 600;
+}
+.ap-s {
+  font-size: 14px;
+  color: #5b5470;
+}
+.ap-body {
+  display: grid;
+}
+.ap-body > p {
+  grid-area: 1 / 1;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #efe7d6;
+  font-size: 14.5px;
+  line-height: 1.5;
+}
+html.film .ap-done {
+  opacity: 0;
+}
+html:not(.film) .ap-done {
+  display: none;
+}
+.ap-btns {
+  display: flex;
+  gap: 10px;
+}
+.ap-yes,
+.ap-no {
+  display: inline-flex;
+  align-items: center;
+  height: 42px;
+  padding: 0 18px;
+  border-radius: 999px;
+  font-size: 14.5px;
+  font-weight: 600;
+}
+.ap-yes {
+  background: var(--ink);
+  color: var(--cream);
+}
+.ap-no {
+  border: 1px solid #c9bfaa;
+  font-weight: 500;
+}
+
+/* Mimo calls */
+.said {
+  font-family: var(--serif);
+  font-size: 19px !important;
+  color: var(--lamp) !important;
+}
+.call {
+  position: absolute;
+  right: 17vw;
+  top: 12vh;
+  width: 300px;
+  padding: 26px 24px 24px;
+  border-radius: 28px;
+  background: rgba(251, 244, 230, 0.97);
+  color: var(--ink);
+  text-align: center;
+  text-shadow: none;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.call-face {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 96px;
+  margin-bottom: 10px;
+}
+.call-face img {
+  position: relative;
+  width: 72px;
+  height: auto;
+}
+.call-face i {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(106, 77, 244, 0.5);
+  animation: ring 1.8s ease-out infinite;
+}
+.call-face i + i {
+  animation-delay: 0.9s;
+}
+.call-who {
+  font-family: var(--serif);
+  font-size: 26px;
+}
+.call-st {
+  font-size: 14px;
+  color: #5b5470;
+}
+.call-msg {
+  margin-top: 12px;
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+/* home */
+.points {
+  list-style: none;
+  margin: 24px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.points li {
+  padding-left: 16px;
+  border-left: 1px solid rgba(251, 244, 230, 0.28);
+  font-size: 15.5px;
+  line-height: 1.5;
+  color: var(--cream-2);
+}
+.points b {
+  display: block;
+  font-weight: 600;
+  color: var(--cream);
+}
+.apps {
+  margin-top: 22px;
+  font-size: 14.5px !important;
+  color: var(--muted) !important;
+}
+
+/* limits */
+.sc-limits .col {
+  top: 13vh;
+  width: min(760px, 52vw);
+  transform: none;
+}
+.lim-sub {
+  margin-top: 12px !important;
+}
+.limits {
+  list-style: none;
+  margin: 28px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px 36px;
+}
+.limit {
+  padding-top: 14px;
+  border-top: 1px solid rgba(251, 244, 230, 0.24);
+}
+.lh {
+  margin-bottom: 6px;
+  font-family: var(--serif);
+  font-size: 21px;
+  line-height: 1.2;
+}
+.lp {
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--cream-2);
+}
+
+/* join */
+.sc-join .col {
+  left: max(var(--gut), 6.6vw);
+  top: max(96px, 14vh);
+  width: min(500px, 40vw);
+  transform: none;
+  text-align: left;
+}
+.sc-join h2 {
+  margin-top: 12px;
+  font-size: clamp(48px, 5vw, 74px);
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+.sc-join .col > p {
+  font-size: 17px;
+  color: var(--cream-2);
+}
+.sc-join .col > .porch-line {
+  margin: 0;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 21px;
+  color: var(--lamp);
+}
+.sc-join .join {
+  margin-left: 0;
+}
+.next {
+  margin-top: 40px;
+}
+.next h3 {
+  margin: 0;
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: 20px;
+}
+.next ol {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.next li {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 0;
+  border-top: 1px solid rgba(232, 224, 245, 0.14);
+  font-size: 15.5px;
+  line-height: 1.4;
+  color: var(--cream-2);
+}
+.next li:last-child {
+  border-bottom: 1px solid rgba(232, 224, 245, 0.14);
+}
+.next li span {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid rgba(232, 224, 245, 0.4);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cream);
+}
+@media (min-width: 900px) and (max-height: 800px) {
+  .sc-join .col {
+    top: 84px;
+  }
+  .next {
+    margin-top: 26px;
+  }
+  .next li {
+    padding: 8px 0;
+  }
+}
+@media (min-width: 900px) and (max-height: 680px) {
+  .next {
+    display: none;
+  }
+}
+
+/* the team photo on the lawn: each Mate sways from its feet and bobs, out of step with the others */
+.lawn {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+}
+.lawn-wide {
+  left: 42vw;
+  right: 12vw;
+  /* the foreground grass is ~13.6vw tall: stand on its thick lower third, whatever the window shape */
+  bottom: max(3.5vh, calc(13.6vw * 0.4 - 1.5vh));
+  --hb: min(8vh, 4.6vw);
+  --hf: min(10vh, 5.8vw);
+}
+.lawn-phone {
+  display: none;
+  left: 0;
+  right: 0;
+  bottom: 1.5vh;
+}
+.lawn-row {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  height: var(--h);
+}
+.lawn-wide .lawn-row:first-child {
+  --h: var(--hb);
+}
+.lawn-wide .lawn-row:last-child {
+  --h: var(--hf);
+  margin-top: calc(var(--hf) * -0.3);
+}
+.lawn-m {
+  height: 100%;
+  margin-left: calc(var(--h) * -0.08);
+}
+.lawn-m:first-child {
+  margin-left: 0;
+}
+.lawn-mimo {
+  height: 122%;
+}
+.lawn img {
+  display: block;
+  height: 100%;
+  width: auto;
+  transform-origin: 50% 100%;
+  filter: brightness(0.85) drop-shadow(0 6px 7px rgba(0, 0, 0, 0.45));
+  animation: lawn-sway 3.2s ease-in-out infinite, lawn-bob 2.4s ease-in-out infinite;
+  will-change: transform;
+}
+@keyframes lawn-sway {
+  0%,
+  100% {
+    rotate: -2.5deg;
+  }
+  50% {
+    rotate: 2.5deg;
+  }
+}
+@keyframes lawn-bob {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -3px;
+  }
+}
+/* the wind through the grass in front */
+.grass-sway {
+  transform-origin: 50% 100%;
+  animation: grass-wind 4.6s ease-in-out infinite;
+  will-change: transform;
+}
+@keyframes grass-wind {
+  0%,
+  100% {
+    transform: skewX(0deg);
+  }
+  40% {
+    transform: skewX(-2.6deg);
+  }
+  70% {
+    transform: skewX(1.3deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lawn img,
+  .grass-sway {
+    animation: none;
+  }
+}
+@media (max-width: 899.98px), (max-aspect-ratio: 1049/1000) {
+  .lawn-wide {
+    display: none;
+  }
+  .lawn-phone {
+    display: flex;
+  }
+  .lawn-phone .lawn-row:nth-child(1) {
+    --h: min(9.5vw, 5.2vh);
+  }
+  .lawn-phone .lawn-row:nth-child(2) {
+    --h: min(10.5vw, 5.8vh);
+    margin-top: calc(var(--h) * -0.15);
+  }
+  .lawn-phone .lawn-row:nth-child(3) {
+    --h: min(12.5vw, 6.8vh);
+    margin-top: calc(var(--h) * -0.3);
+  }
+  .sc-join .col > .porch-line {
+    font-size: 18px;
+  }
+  .sc-join .col > p {
+    font-size: 16px;
+  }
+  .next {
+    margin-top: 24px;
+  }
+  .next h3 {
+    font-size: 18px;
+  }
+  .next li {
+    padding: 8px 0;
+    font-size: 14.5px;
+  }
+}
+@media (max-width: 899.98px) and (max-height: 820px) {
+  html.film .sc-join .next {
+    display: none;
+  }
+}
+.foot-mini {
+  display: none;
+}
+@media (max-width: 899.98px), (max-aspect-ratio: 1049/1000) {
+  html.film .sc-join .foot {
+    display: none;
+  }
+  html.film .foot-mini {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 18px;
+    margin-top: 14px;
+    font-size: 13.5px;
+    color: var(--muted);
+  }
+  html.film .foot-mini a {
+    color: inherit;
+  }
+  html.film .sc-join::after {
+    display: none;
+  }
+}
+.join {
+  position: relative;
+  margin: 28px auto 0;
+  width: min(520px, 100%);
+  height: 62px;
+  padding: 6px;
+  display: flex;
+  gap: 6px;
+  border-radius: 999px;
+  background: rgba(20, 16, 50, 0.4);
+  border: 1px solid rgba(251, 244, 230, 0.36);
+  -webkit-backdrop-filter: blur(16px) saturate(120%);
+  backdrop-filter: blur(16px) saturate(120%);
+  text-shadow: none;
+  transition: border-color 0.2s;
+}
+.join:focus-within {
+  border-color: var(--lamp);
+}
+.join input {
+  flex: 1;
+  min-width: 0;
+  padding: 0 20px;
+  border: 0;
+  background: transparent;
+  color: var(--cream);
+  font: inherit;
+  font-size: 16px;
+  outline: none;
+}
+.join input::placeholder {
+  color: rgba(251, 244, 230, 0.55);
+}
+.join button {
+  padding: 0 26px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--cream);
+  color: var(--ink);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.join button:hover {
+  background: #fff;
+}
+.join button:disabled {
+  opacity: 0.7;
+  cursor: progress;
+}
+.join-err {
+  position: absolute;
+  left: 22px;
+  right: 22px;
+  top: calc(100% + 10px);
+  font-size: 14px;
+  color: #ffb9ad;
+}
+.join-done {
+  margin-top: 30px;
+  font-family: var(--serif);
+  font-size: 22px;
+  color: var(--lamp);
+}
+.film-link {
+  display: inline-block;
+  margin-top: 26px;
+  font-size: 15px;
+  font-weight: 500;
+  text-underline-offset: 4px;
+}
+.film-link:hover {
+  color: var(--lamp);
+}
+.sc-join::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0 0;
+  z-index: -1;
+  height: 160px;
+  background: linear-gradient(0deg, rgba(10, 8, 28, 0.7), rgba(10, 8, 28, 0));
+  pointer-events: none;
+}
+html.film .sc-join {
+  isolation: isolate;
+}
+.foot {
+  position: absolute;
+  left: var(--gut);
+  right: var(--gut);
+  bottom: 22px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 24px;
+  font-size: 14px;
+  color: var(--muted);
+}
+.foot nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+}
+.foot a {
+  color: var(--cream-2);
+  text-decoration: none;
+}
+.foot a:hover {
+  color: var(--lamp);
+}
+.foot-word {
+  font-family: var(--serif);
+  font-size: 19px;
+  font-weight: 600;
+  color: var(--cream);
+}
+
+/* ---------------------------------------------------------------- phones and tall windows */
+
+/* the opposite of isWide() in components/house/cam.ts */
+@media (max-width: 899.98px), (max-aspect-ratio: 1049/1000) {
+  .den {
+    background:
+      radial-gradient(52% 5% at 50% 47%, rgba(255, 214, 160, 0.26), transparent 72%),
+      radial-gradient(80% 12% at 50% 50%, rgba(150, 120, 255, 0.2), transparent 72%),
+      radial-gradient(90% 34% at 50% 30%, rgba(110, 84, 240, 0.34), transparent 70%),
+      linear-gradient(180deg, #0c0a1c 0%, #141030 40%, #2e2236 40.1%, #221827 56%, #140d18 100%);
+  }
+  .bezel {
+    border-radius: 12px;
+    box-shadow:
+      0 0 0 16px #0b0a10,
+      0 0 0 17.5px #34313f;
+  }
+  .bezel i {
+    top: -10px;
+    width: 5px;
+    height: 5px;
+    margin-left: -2.5px;
+  }
+  .deck {
+    top: calc(100% - var(--it) * var(--lap) + 17px);
+  }
+  .grass {
+    left: -60vw;
+    right: -60vw;
+  }
+  /* the rings are wider than a phone: draw them on a canvas twice as wide so they never get cut off */
+  .loops-in {
+    left: -50%;
+    right: -50%;
+    width: auto;
+  }
+  .scrim-side {
+    background: linear-gradient(0deg, rgba(10, 8, 28, 0.95) 0%, rgba(10, 8, 28, 0.82) 34%, rgba(10, 8, 28, 0) 58%);
+  }
+  .scrim-top {
+    background: linear-gradient(180deg, rgba(10, 8, 30, 0.82) 0%, rgba(10, 8, 30, 0.5) 38%, rgba(10, 8, 30, 0) 62%);
+  }
+  .col,
+  .sc-what .col,
+  html.film .rooms {
+    left: 16px;
+    right: 16px;
+    top: auto;
+    bottom: calc(22px + env(safe-area-inset-bottom));
+    width: auto;
+    transform: none;
+  }
+  .sc-hero .col,
+  .sc-limits .col {
+    left: 16px;
+    right: 16px;
+    top: 92px;
+    bottom: auto;
+    width: auto;
+  }
+  .sc-join .col {
+    left: 16px;
+    right: 16px;
+    top: 96px;
+    width: auto;
+    transform: none;
+  }
+  .col > h2 {
+    font-size: clamp(30px, 8.4vw, 40px);
+  }
+  .col > p {
+    margin-top: 12px;
+    font-size: 15.5px;
+  }
+  .sc-hero h1 {
+    font-size: clamp(46px, 13.5vw, 64px);
+  }
+  .lede {
+    margin-top: 18px;
+    font-size: 16px;
+  }
+  .cta {
+    margin-top: 22px;
+  }
+  .btn {
+    height: 50px;
+    padding: 0 20px;
+    font-size: 15px;
+  }
+  .what-p {
+    font-size: 21px !important;
+  }
+  .rc-faces {
+    height: 46px;
+    margin-bottom: 10px;
+  }
+  .rc-faces img {
+    width: 44px;
+  }
+  .room-card h3 {
+    margin-bottom: 8px;
+    font-size: 32px;
+  }
+  .rc-line {
+    font-size: 15px;
+  }
+  .rc-ask {
+    margin-top: 12px;
+  }
+  .bubble {
+    font-size: 14.5px;
+  }
+  .map {
+    display: none;
+  }
+  .steps {
+    margin-top: 16px;
+    gap: 10px;
+  }
+  .step p {
+    font-size: 14.5px;
+  }
+  .step .q {
+    font-size: 15.5px;
+  }
+  html.film .step .jobs {
+    display: inline;
+  }
+  .tag {
+    display: none;
+  }
+  .sc-halo .col > p {
+    display: none;
+  }
+  .approve {
+    margin-top: 16px;
+    padding: 14px 16px;
+    gap: 10px;
+  }
+  .call {
+    left: 50%;
+    right: auto;
+    top: 96px;
+    width: min(300px, calc(100vw - 32px));
+    margin-left: calc(min(300px, calc(100vw - 32px)) / -2);
+    padding: 20px;
+  }
+  .call-face {
+    width: 76px;
+    height: 76px;
+    margin-bottom: 6px;
+  }
+  .call-face img {
+    width: 58px;
+  }
+  .call-msg {
+    margin-top: 8px;
+    font-size: 14px;
+  }
+  .points {
+    margin-top: 14px;
+    gap: 10px;
+  }
+  .points li {
+    font-size: 14.5px;
+  }
+  .apps {
+    display: none;
+  }
+  .limits {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin-top: 18px;
+  }
+  .limit {
+    padding-top: 9px;
+  }
+  .lh {
+    margin: 0;
+    font-size: 17px;
+  }
+  .lp {
+    display: none;
+  }
+  .sc-join h2 {
+    font-size: clamp(44px, 12.5vw, 60px);
+  }
+  .sc-join .col > p {
+    font-size: 16px;
+  }
+  .join {
+    height: 58px;
+  }
+  .join input {
+    padding: 0 14px;
+  }
+  .join button {
+    padding: 0 18px;
+    font-size: 15px;
+  }
+  .foot {
+    left: 16px;
+    right: 16px;
+    bottom: calc(14px + env(safe-area-inset-bottom));
+    justify-content: center;
+    text-align: center;
+    font-size: 13px;
+  }
+  .foot-word {
+    display: none;
+  }
+}
+
+/* ---------------------------------------------------------------- no film: an ordinary page */
+
+html:not(.film) .nav {
+  background: linear-gradient(180deg, rgba(14, 10, 38, 0.92), rgba(14, 10, 38, 0));
+}
+html:not(.film) .sc {
+  position: relative;
+  isolation: isolate;
+  min-height: 100vh;
+  min-height: 100svh;
+  padding: 130px var(--gut) 90px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+}
+html:not(.film) .sc-bg {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 65% 60%;
+  filter: brightness(0.5);
+}
+html:not(.film) .sc-hero .sc-bg {
+  filter: none;
+}
+html:not(.film) .col,
+html:not(.film) .sc-join .col {
+  position: relative;
+  inset: auto;
+  top: auto;
+  left: auto;
+  transform: none;
+  width: min(720px, 100%);
+}
+html:not(.film) .sc-join .col {
+  margin: 0 auto;
+}
+html:not(.film) .sc-tour {
+  background: var(--night);
+}
+html:not(.film) .rooms {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 40px 32px;
+}
+html:not(.film) .map {
+  display: none;
+}
+html:not(.film) .call {
+  position: relative;
+  inset: auto;
+  margin: 32px 0 0;
+}
+html:not(.film) .foot {
+  position: relative;
+  inset: auto;
+  margin-top: 80px;
+}
+/* a shade between picture and words, so the copy never sits on a bright window */
+html:not(.film) .sc-bg {
+  z-index: -2;
+}
+html:not(.film) .sc:not(.sc-hero)::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(18, 14, 46, 0.72), rgba(18, 14, 46, 0.3) 55%, rgba(18, 14, 46, 0) 80%);
+}
+@media (max-width: 899.98px), (max-aspect-ratio: 1049/1000) {
+  html:not(.film) .sc {
+    justify-content: flex-start;
+  }
+  html:not(.film) .sc::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: linear-gradient(180deg, rgba(18, 14, 46, 0.82) 0%, rgba(18, 14, 46, 0.7) 50%, rgba(18, 14, 46, 0.15) 88%);
+  }
+  html:not(.film) .sc-hero .sc-bg {
+    object-position: 62% 100%;
+  }
+  /* the film trims these on phones for room; a plain page has room */
+  html:not(.film) .lp,
+  html:not(.film) .sc-halo .col > p {
+    display: block;
+  }
+  html:not(.film) .apps {
+    display: block;
+  }
+}
+
+/* phones: the nav often sits on the busy cutaway, so give it a soft shade of its own */
+@media (max-width: 899.98px), (max-aspect-ratio: 1049/1000) {
+  html.film .nav::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 -20px 0;
+    z-index: -1;
+    pointer-events: none;
+    background: linear-gradient(180deg, rgba(14, 10, 38, 0.6), rgba(14, 10, 38, 0));
+  }
+}
+/* short phones: the house needs the room more than the per-Mate list in step 3 does */
+@media (max-width: 899.98px) and (max-height: 740px) {
+  html.film .step .jobs {
+    display: none;
+  }
+}
