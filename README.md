@@ -8,18 +8,29 @@
 
 ---
 
-## ⚡ Where Gemini is Used
+## ⚡ Where Google Gemini is Used
 
 Loopmates leverages the Google Gemini ecosystem across multiple core modalities:
 
 | Feature | Gemini API / Capability | What it does |
 |---|---|---|
-| **Real-Time Voice Calls** | **Gemini Live API** (`BidiGenerateContent` over WebSocket) | Two-way, ultra-low latency voice calls with your Mates from the web dashboard or mobile app. Each Mate has a distinct voice. Mates can proactively call you when input is needed, or schedule call-backs ("call me at 6"). Post-call transcripts synthesize into chat history and follow-up tasks. |
+| **Real-Time Voice Calls** | **Gemini Live API** (`BidiGenerateContent` over WebSocket) | Two-way real-time voice calls with distinct audio personalities and live interruption handling from the web dashboard or mobile app. Mates can proactively call you when input is needed, or schedule call-backs ("call me at 6"). |
 | **Voice Previews** | **Gemini TTS** (`gemini-2.5-flash-preview-tts`) | Audio preview of each Mate's personality and voice timbre in the dashboard settings before assigning. |
-| **Agent Reasoning Engine** | **Gemini 2.5 Flash** (OpenAI-compatible endpoint) | Core cognition: multi-turn chat, task decomposition, native tool calling, second-opinion verification, and executive summaries. |
-| **Web Search Grounding** | **Gemini Search Grounding** | Research and Scout perform web lookups with grounded, verifiable, and cited sources. |
-| **Semantic Long-Term Memory** | **`gemini-embedding-001`** | Semantic vector search across shared memories, per-agent journals, and reflection lessons. |
+| **Agent Reasoning Engine** | **Gemini 4 Hydrogen** (OpenAI-compatible endpoint) | High-speed agent cognition, planning, tool calling, and second-opinion peer review. |
+| **Web Search Grounding** | **Gemini Search Grounding** | Fact-checked web search grounding for research tasks with cited sources. |
+| **Semantic Long-Term Memory** | **`gemini-embedding-002`** | Semantic vector indexing across agent memory journals, shared memories, and reflection lessons. |
 | **Deep Research Harness** | **Gemini 1M+ Long Context** | Reads uploaded PDFs, datasheets, and patent filings. Extracts structured values with source quotes, programmatically validated against source pages to eliminate hallucinations. |
+
+---
+
+## 🛠️ Built With
+
+- **Google Gemini Live API & Gemini 4 Hydrogen**
+- **Next.js & React**
+- **TypeScript & Node.js**
+- **React Native & Expo**
+- **Tailwind CSS & WebSockets**
+- **GSAP & Three.js** (Launch film motion runtime)
 
 ---
 

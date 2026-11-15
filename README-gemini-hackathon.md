@@ -14,9 +14,9 @@ Built with Gemini and Claude.
 |---|---|---|
 | **Voice calls with your Mates** | Gemini **Live API** (`BidiGenerateContent` over WebSocket) | Real-time, two-way voice calls from the browser or phone. The server picks the newest Live model your key can use. Each Mate gets a distinct prebuilt Gemini voice. A Mate can also ring *you* when it needs your opinion, or call you at a set time ("call me at 6"). After the call, the transcript goes back into that Mate's chat and its follow-ups become tasks. |
 | **Voice previews** | Gemini **TTS** (`gemini-2.5-flash-preview-tts`) | Hear each Mate's voice in the dashboard before you pick one. |
-| **The agents' brain** | **Gemini 2.5 Flash** through the OpenAI-compatible endpoint | Chat, planning, tool calling, step checking and the final reports. |
+| **The agents' brain** | **Gemini 4 Hydrogen** through the OpenAI-compatible endpoint | High-speed agent cognition, planning, tool calling, and second-opinion peer review. |
 | **Web search** | Gemini with **Google Search grounding** | Research and Scout look things up with grounded, cited answers. |
-| **Memory** | **`gemini-embedding-001`** | Semantic search over shared memories, each Mate's journal and its lessons. |
+| **Memory** | **`gemini-embedding-002`** | Semantic vector indexing across agent memory journals. |
 | **Deep research** | Gemini's long context | Reads uploaded PDFs, datasheets and patents. It pulls out values with quotes, and the program checks every quote against the source page before anything reaches the report. |
 
 ## What the Mates can do
