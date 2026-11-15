@@ -1,0 +1,5 @@
+node_modules/
+tools/bin/
+renders/loopmates-v2*.mp4
+*.key
+.env*
